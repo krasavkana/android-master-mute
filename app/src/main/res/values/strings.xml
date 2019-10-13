@@ -1,0 +1,5 @@
+<resources>
+<string name="app_name">MasterMute</string>
+<string name="mute_switch">Master Mute</string>
+<string name="description">Reflection sample invoking setMasterMute (hidden)method in AudioManager class</string>
+</resources>
