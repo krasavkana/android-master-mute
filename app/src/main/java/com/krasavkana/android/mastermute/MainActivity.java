@@ -1,5 +1,8 @@
 package com.krasavkana.android.mastermute;
 
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,18 +16,27 @@ import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "ReflectionSample";
+    private static final String TAG = "MasterMute";
 
     private Class<AudioManager> clazz;
     private AudioManager am;
 
     private Switch sw;
 
+    private ComponentName mCallerComponentName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // 他アプリからのstartActivityForResult()起動／通常起動かを確認するため
+        mCallerComponentName = getCallingActivity();
+        if(mCallerComponentName!=null) {
+            String caller = mCallerComponentName.getPackageName();
+            Log.d(TAG, "caller:" + caller);
+        }
 
         am = (AudioManager)getSystemService(AUDIO_SERVICE);
         //  http://www.ne.jp/asahi/hishidama/home/tech/java/reflection.html
@@ -49,6 +61,13 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG,"Now Off, so set MasterMute On");
                     MasterMuteOn();
                     sw.setChecked(true);
+                    // 他アプリからよばれたとき、MasterMuteが無効ならUI操作をまって正常終了
+                    if(mCallerComponentName != null) {
+                        Intent intent = new Intent();
+//                intent.putExtra("INPUT_STRING", edit.getText().toString());
+                        setResult(RESULT_OK, intent);
+                        finish();
+                    }
                 }
             }
         });
@@ -138,6 +157,13 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG,"onResume()");
         if(isMasterMuteOn()) {
             sw.setChecked(true);
+            // 他アプリからよばれたとき、MasterMuteが有効ならすぐに正常終了
+            if(mCallerComponentName != null) {
+                Intent intent = new Intent();
+//                intent.putExtra("INPUT_STRING", edit.getText().toString());
+                setResult(RESULT_OK, intent);
+                finish();
+            }
         }else{
             sw.setChecked(false);
         }
